@@ -1,37 +1,71 @@
-# cpp-foundation
+# CPP Foundation
 
-C++98의 객체 수명, 복사 의미론, 다형성, 변환 경계를 작은 정적
-라이브러리와 명령행 프로그램으로 검증하는 프로젝트다.
+![Language](https://img.shields.io/badge/language-C%2B%2B98-blue?logo=cplusplus&logoColor=white)
+![Build](https://img.shields.io/badge/build-Make-lightgrey)
 
-## 개발 기준
+`cpp-foundation`은 42 `CPP00`부터 `CPP09`까지의 과제를 하나의 C++98 기반 학습 프로젝트로 확장한 정적 라이브러리와 명령행 예제 모음입니다. 객체 수명, 복사 의미론, 다형성, 변환 경계, 템플릿과 예외 안전성을 공개 API와 실행 프로그램으로 검증합니다.
 
-- 모든 제품 코드는 C++98로 컴파일한다.
-- 공개 헤더와 구현 파일의 책임을 분리한다.
-- 소유권과 객체 수명은 형식의 불변식으로 표현한다.
-- 복사 생성, 대입, 소멸 동작을 명시적으로 검토한다.
-- 실패한 연산은 가능한 한 기존 상태를 보존한다.
-- 전역 가변 상태와 숨은 외부 의존성을 두지 않는다.
+## 구성
 
-## 빌드 기준
+- `include/`: 공개 헤더
+- `src/`: 정적 라이브러리 구현
+- `apps/`: 공개 API를 사용하는 예제 프로그램
+- `tests/`: 단위, 통합, 실패 경계와 공개 계약 테스트
 
-- 경고를 오류로 처리한다.
-- 정적 라이브러리를 기본 산출물로 사용한다.
-- 예제 프로그램은 공개 API만 소비한다.
-- 생성 파일과 로컬 실행 결과는 버전 관리에서 제외한다.
+## 빌드
 
-## 검증 기준
+```sh
+make
+```
 
-- 기능을 추가할 때 정상 경계와 실패 경계를 함께 확인한다.
-- 공개 헤더는 저장소 외부 소비자 관점에서도 컴파일 가능해야 한다.
-- 테스트는 구현 세부사항보다 관찰 가능한 계약을 검증한다.
-- 결정적인 입력은 결정적인 결과를 만들어야 한다.
+결과물은 다음 위치에 생성됩니다.
 
-## 저장소 원칙
+```text
+build/lib/libcpp_foundation.a
+build/bin/ex00_contact_book
+build/bin/ex01_text_buffer
+...
+build/obj/
+```
 
-- `include/`에는 공개 헤더를 둔다.
-- `src/`에는 라이브러리 구현을 둔다.
-- `apps/`에는 공개 API를 사용하는 실행 예제를 둔다.
-- `tests/`에는 단위·통합·실패 경계 검증을 둔다.
-- 비밀값, 개인 경로, 환경별 산출물은 커밋하지 않는다.
+C++98 경고 계약과 공개 헤더 경로는 Makefile에 정의되어 있습니다. `CXX`와 `EXTRA_CXXFLAGS`로 컴파일러 또는 추가 플래그를 지정할 수 있습니다.
 
-기능과 검증 절차는 구현이 안정된 뒤 이 문서에 추가한다.
+## 테스트
+
+전체 기능 검증은 다음 명령으로 실행합니다.
+
+```sh
+make test
+```
+
+개별 검증이 필요하면 다음 타깃을 사용할 수 있습니다.
+
+```sh
+make test-unit
+make failure-test
+make test-contract
+make test-integration
+make test-property
+make test-sanitize
+make check
+```
+
+테스트는 정상 동작뿐 아니라 공개 헤더 소비, archive 계약, 할당 실패, 복사/팩토리/pipeline 실패, 결정성 및 플랫폼 의존성을 확인합니다.
+
+## 예제
+
+예제는 모두 `build/bin/` 아래에 생성됩니다. 예를 들어 연락처 예제는 다음과 같이 실행할 수 있습니다.
+
+```sh
+./build/bin/ex00_contact_book < tests/fixtures/contact-session.in
+```
+
+## 정리
+
+```sh
+make clean  # build/ 및 호환용 bin/ 산출물 삭제
+make fclean # clean과 동일
+make re     # fclean 후 전체 재빌드
+```
+
+생성된 실행 파일, object, archive와 테스트 산출물은 저장소에 포함하지 않습니다.

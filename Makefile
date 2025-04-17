@@ -1,4 +1,6 @@
 NAME := libcpp_foundation.a
+BIN_DIR := build/bin
+LIB_DIR := build/lib
 
 CXX := c++
 EXTRA_CXXFLAGS ?=
@@ -19,7 +21,7 @@ OBJ := $(SRC:src/%.cpp=build/obj/%.o)
 DEP := $(OBJ:.o=.d)
 
 APP_SRC := $(sort $(wildcard apps/*.cpp))
-APP_BIN := $(APP_SRC:apps/%.cpp=bin/%)
+APP_BIN := $(APP_SRC:apps/%.cpp=$(BIN_DIR)/%)
 
 TEST_SRC := $(sort $(wildcard tests/test_*.cpp))
 TEST_SUPPORT_SRC := tests/support/TestFormatter.cpp
@@ -59,9 +61,10 @@ RELEASE_BIN := $(APP_BIN) $(PUBLIC_CONTRACT_BIN)
 	check-dependencies check-determinism test-property check-portable \
 	check-platform test check clean fclean re
 
-all: $(NAME) $(APP_BIN)
+all: $(LIB_DIR)/$(NAME) $(APP_BIN)
 
-$(NAME): $(OBJ)
+$(LIB_DIR)/$(NAME): $(OBJ)
+	@$(MKDIR) $(dir $@)
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(OBJ)
 
@@ -69,37 +72,37 @@ build/obj/%.o: src/%.cpp
 	@$(MKDIR) $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
-bin/%: apps/%.cpp $(NAME)
+$(BIN_DIR)/%: apps/%.cpp $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(NAME) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $< $(LIB_DIR)/$(NAME) -o $@
 
-$(TEST_BIN): $(TEST_SRC) $(TEST_SUPPORT_SRC) $(NAME)
+$(TEST_BIN): $(TEST_SRC) $(TEST_SUPPORT_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(TEST_SRC) $(TEST_SUPPORT_SRC) \
-		$(NAME) -o $@
+		$(LIB_DIR)/$(NAME) -o $@
 
 test-unit: $(TEST_BIN)
 	./$(TEST_BIN)
 
-$(FAILURE_BIN): $(FAILURE_SRC) $(NAME)
+$(FAILURE_BIN): $(FAILURE_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(FAILURE_SRC) $(NAME) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(FAILURE_SRC) $(LIB_DIR)/$(NAME) -o $@
 
-$(FACTORY_FAILURE_BIN): $(FACTORY_FAILURE_SRC) $(NAME)
+$(FACTORY_FAILURE_BIN): $(FACTORY_FAILURE_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(FACTORY_FAILURE_SRC) $(NAME) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(FACTORY_FAILURE_SRC) $(LIB_DIR)/$(NAME) -o $@
 
-$(BATCH_FAILURE_BIN): $(BATCH_FAILURE_SRC) $(NAME)
+$(BATCH_FAILURE_BIN): $(BATCH_FAILURE_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(BATCH_FAILURE_SRC) $(NAME) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(BATCH_FAILURE_SRC) $(LIB_DIR)/$(NAME) -o $@
 
-$(PIPELINE_FAILURE_BIN): $(PIPELINE_FAILURE_SRC) $(NAME)
+$(PIPELINE_FAILURE_BIN): $(PIPELINE_FAILURE_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(PIPELINE_FAILURE_SRC) $(NAME) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(PIPELINE_FAILURE_SRC) $(LIB_DIR)/$(NAME) -o $@
 
-$(CONTACT_FAILURE_BIN): $(CONTACT_FAILURE_SRC) $(NAME)
+$(CONTACT_FAILURE_BIN): $(CONTACT_FAILURE_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CONTACT_FAILURE_SRC) $(NAME) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(CONTACT_FAILURE_SRC) $(LIB_DIR)/$(NAME) -o $@
 
 failure-test: $(FAILURE_BIN) $(FACTORY_FAILURE_BIN) $(BATCH_FAILURE_BIN) \
 	$(PIPELINE_FAILURE_BIN) $(CONTACT_FAILURE_BIN)
@@ -109,18 +112,18 @@ failure-test: $(FAILURE_BIN) $(FACTORY_FAILURE_BIN) $(BATCH_FAILURE_BIN) \
 	./$(PIPELINE_FAILURE_BIN)
 	./$(CONTACT_FAILURE_BIN)
 
-$(NO_ELIDE_BIN): $(TEST_SRC) $(TEST_SUPPORT_SRC) $(NAME)
+$(NO_ELIDE_BIN): $(TEST_SRC) $(TEST_SUPPORT_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -fno-elide-constructors \
-		$(TEST_SRC) $(TEST_SUPPORT_SRC) $(NAME) -o $@
+		$(TEST_SRC) $(TEST_SUPPORT_SRC) $(LIB_DIR)/$(NAME) -o $@
 
 test-no-elide: $(NO_ELIDE_BIN)
 	./$(NO_ELIDE_BIN)
 
-$(PUBLIC_CONTRACT_BIN): $(PUBLIC_CONTRACT_SRC) $(NAME)
+$(PUBLIC_CONTRACT_BIN): $(PUBLIC_CONTRACT_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
 	$(CXX) $(PUBLIC_CPPFLAGS) $(CXXFLAGS) $(PUBLIC_CONTRACT_SRC) \
-		$(NAME) -o $@
+		$(LIB_DIR)/$(NAME) -o $@
 
 test-contract:
 	$(CXX) $(PUBLIC_CPPFLAGS) $(CXXFLAGS) -fsyntax-only \
@@ -184,26 +187,26 @@ test-contract:
 	@! $(CXX) $(PUBLIC_CPPFLAGS) $(CXXFLAGS) -fsyntax-only \
 		tests/compile/template_list_sort_fail.cpp >/dev/null 2>&1
 
-test-consumer: $(NAME)
-	sh tests/check_external_consumer.sh "$(CXX)" "$(abspath $(NAME))"
+test-consumer: $(LIB_DIR)/$(NAME)
+	sh tests/check_external_consumer.sh "$(CXX)" "$(abspath $(LIB_DIR)/$(NAME))"
 
 test-integration: $(APP_BIN) $(PUBLIC_CONTRACT_BIN) test-consumer
 	sh tests/check_cli.sh
 	./$(PUBLIC_CONTRACT_BIN)
 
-$(PROPERTY_BIN): $(PROPERTY_SRC) $(NAME)
+$(PROPERTY_BIN): $(PROPERTY_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(PROPERTY_SRC) $(NAME) -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(PROPERTY_SRC) $(LIB_DIR)/$(NAME) -o $@
 
 test-property: $(PROPERTY_BIN)
 	sh tests/run_with_timeout.sh 30 ./$(PROPERTY_BIN)
 
-$(ASAN_BIN): $(SRC) $(TEST_SRC) $(TEST_SUPPORT_SRC)
+$(ASAN_BIN): $(SRC) $(TEST_SRC) $(TEST_SUPPORT_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(ASAN_FLAGS) \
 		$(SRC) $(TEST_SRC) $(TEST_SUPPORT_SRC) -o $@
 
-$(UBSAN_BIN): $(SRC) $(TEST_SRC) $(TEST_SUPPORT_SRC)
+$(UBSAN_BIN): $(SRC) $(TEST_SRC) $(TEST_SUPPORT_SRC) $(LIB_DIR)/$(NAME)
 	@$(MKDIR) $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(UBSAN_FLAGS) \
 		$(SRC) $(TEST_SRC) $(TEST_SUPPORT_SRC) -o $@
@@ -225,8 +228,8 @@ test-leak: $(TEST_BIN) $(NO_ELIDE_BIN) $(PUBLIC_CONTRACT_BIN)
 	sh tests/check_leaks.sh $(TEST_BIN) $(NO_ELIDE_BIN) \
 		$(PUBLIC_CONTRACT_BIN)
 
-check-archive: $(NAME)
-	sh tests/check_archive.sh $(NAME)
+check-archive: $(LIB_DIR)/$(NAME)
+	sh tests/check_archive.sh $(LIB_DIR)/$(NAME)
 
 check-dependencies: $(RELEASE_BIN)
 	sh tests/check_dependencies.sh $(RELEASE_BIN)
@@ -271,7 +274,6 @@ clean:
 	$(RMDIR) build bin
 
 fclean: clean
-	$(RM) $(NAME)
 
 re: fclean all
 
