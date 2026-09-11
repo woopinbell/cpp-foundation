@@ -6,6 +6,8 @@
 namespace cppf
 {
 
+// [INTV:ARCH] RPN(후위 표기법)은 스택 하나로 왼쪽에서 오른쪽으로 훑으며 계산 가능 — evaluate()의
+// 구현이 스택 기반인 근거.
 class RpnEvaluator
 {
 public:

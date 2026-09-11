@@ -18,6 +18,10 @@ bool isWhitespace(char value)
            value == '\v' || value == '\f' || value == '\r';
 }
 
+// [INTV:EDGE] 널 바이트, 8비트 확장 문자(127 초과), 공백을 여기서 조기에 거부해 이후 파싱 로직이
+// 순수 ASCII 인쇄 문자만 다룬다고 가정할 수 있게 만든다.
+// - [TRAP] 이 검사를 파싱 로직 뒤로 미루면, 뒤쪽의 문자별 비교(isDigit 등)가 8비트 문자에 대해
+//   구현정의 동작을 일으킬 수 있다. 반드시 진입점에서 가장 먼저 걸러낼 것.
 void rejectInvalidBytes(const std::string &text)
 {
     std::size_t index;
@@ -34,6 +38,8 @@ void rejectInvalidBytes(const std::string &text)
     }
 }
 
+// [INTV:ARCH] std::numeric_limits<double>::quiet_NaN()/infinity(): 0.0/0.0 같은 직접 계산 대신
+// 표준이 제공하는 함수로 IEEE 754 특수값을 이식성 있게 얻는다.
 cppf::scalar_detail::ScalarLiteral makeSpecial(
     cppf::scalar_detail::LiteralKind kind,
     bool float_suffix)
@@ -122,6 +128,11 @@ void validateFiniteGrammar(const std::string &text, bool &float_suffix)
         throw cppf::scalar_detail::ScalarParseError();
 }
 
+// [INTV:EDGE] istringstream + imbue(classic)로 strtod 대신 C++ 스트림 파싱을 쓰되, 로케일이 소수점
+// 문자를 바꿔버리는 걸 막는다. input.fail() || !input.eof()로 "부분만 파싱되고 남은 문자가 있는" 입력을
+// 걸러내고, value != value로 NaN을 검출한다(NaN은 IEEE 754상 자기 자신과도 같지 않은 유일한 값).
+// - [TRAP] !input.eof() 체크를 빼먹으면 "12abc" 같은 입력이 "12"까지만 파싱되고 성공으로 처리되는
+//   버그가 생긴다. operator>>는 뒤에 문자가 남아 있어도 fail 플래그를 세우지 않는다.
 double extractFiniteValue(const std::string &text, bool float_suffix)
 {
     const std::string number =

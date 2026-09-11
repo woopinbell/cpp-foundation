@@ -14,6 +14,7 @@ public:
     virtual const char *what() const throw();
 };
 
+// [INTV:ARCH] 정적 유틸리티 클래스 (인스턴스화/복사 차단 관용구 반복).
 class ScalarConverter
 {
 public:
